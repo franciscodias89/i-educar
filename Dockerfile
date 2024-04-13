@@ -74,12 +74,6 @@ RUN rm -rf /etc/nginx/sites-enabled/* \
     && rm -rf /etc/nginx/sites-available/*
 COPY --chown=www-data:www-data ./docker/nginx/default.conf /etc/nginx/sites-enabled/default.conf
 
-### Copiando aplicação para dentro do container
-WORKDIR $APP_DIR
-COPY --chown=www-data:www-data . .
-RUN cd $APP_DIR
-RUN ls -lah composer.json
-
 RUN composer new-install
 
 
