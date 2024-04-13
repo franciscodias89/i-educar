@@ -80,8 +80,7 @@ COPY --chown=www-data:www-data . .
 RUN cd $APP_DIR
 RUN ls -lah composer.json
 
-RUN chown -R www-data:www-data $APP_DIR \
-    && composer install --no-interaction
+RUN composer new-install
 
 
 ### Comandos úteis para otimização da aplicação
