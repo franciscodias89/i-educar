@@ -1,6 +1,8 @@
 FROM httpd
 
 MAINTAINER Portabilis
+### Diretório da aplicação
+ARG APP_DIR=/var/www/app
 
 RUN apt-get update -y
 
@@ -21,8 +23,10 @@ ENV XDEBUG_CLIENT_PORT 9003
 ENV XDEBUG_MODE dev,debug,coverage
 ENV XDEBUG_START_WITH_REQUEST off
 
+
+
 COPY --chown=www-data:www-data ./docker/php/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
-COPY --chown=www-data:www-data ./docker/nginx/default.conf /etc/nginx/sites-enabled/default.conf
+
 
 
 RUN apk add --update \
@@ -64,3 +68,29 @@ RUN apk del .phpize_deps
 RUN ln -s /var/www/ieducar/artisan /usr/local/bin/artisan
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+### NGINX
+RUN rm -rf /etc/nginx/sites-enabled/* \
+    && rm -rf /etc/nginx/sites-available/*
+COPY --chown=www-data:www-data ./docker/nginx/default.conf /etc/nginx/sites-enabled/default.conf
+
+### Copiando aplicação para dentro do container
+WORKDIR $APP_DIR
+COPY --chown=www-data:www-data . .
+RUN cd $APP_DIR
+RUN ls -lah composer.json
+
+RUN chown -R www-data:www-data $APP_DIR \
+    && composer install --no-interaction
+
+
+### Comandos úteis para otimização da aplicação
+RUN php artisan clear-compiled \
+    && php artisan optimize
+
+RUN php artisan vendor:publish --tag=reliese-models
+
+### Limpeza e otimização da construção
+RUN rm -rf /var/lib/apt/lists/* \
+    && apt-get autoremove -y \
+    && apt-get clean
